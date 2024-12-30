@@ -3,59 +3,54 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="box.png" />
     <title>Login - Box</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        background-color: #f4ede5;
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+      import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyD5bw3a-mbaoYOwOpCUcODwt77c-cJyWTw",
+        authDomain: "boxi-40e55.firebaseapp.com",
+        projectId: "boxi-40e55",
+        storageBucket: "boxi-40e55.firebasestorage.app",
+        messagingSenderId: "777028358786",
+        appId: "1:777028358786:web:961e22a3908b689a295a9b"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      function login(event) {
+        event.preventDefault();
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const errorElement = document.getElementById("error");
+
+        const usersRef = ref(db, 'users/');
+        get(usersRef).then((snapshot) => {
+          let foundUser = false;
+          if (snapshot.exists()) {
+            const users = snapshot.val();
+            for (const userId in users) {
+              const user = users[userId];
+              if (user.username === username && user.password === password) {
+                foundUser = true;
+                localStorage.setItem("currentUser", userId);
+                window.location.href = "storage.html"; // Redirect to storage page
+                break;
+              }
+            }
+          }
+
+          if (!foundUser) {
+            errorElement.innerHTML =
+              'Account not found. Click <a href="sign-up.html">here</a> to sign up.';
+          }
+        }).catch((error) => {
+          console.error("Error checking user:", error);
+        });
       }
-      .form-container {
-        width: 300px;
-        padding: 20px;
-        background-color: #d2b48c;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-        text-align: center;
-      }
-      .form-container h1 {
-        margin-bottom: 20px;
-        color: #5a4630;
-      }
-      .form-container input {
-        width: 100%;
-        padding: 10px;
-        margin: 10px 0;
-        border: 1px solid #a0846c;
-        border-radius: 4px;
-        background-color: #f9f5f1;
-      }
-      .form-container button {
-        width: 100%;
-        padding: 10px;
-        background-color: #8b5e3c;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      .form-container button:hover {
-        background-color: #6e4830;
-      }
-      #error {
-        color: red;
-        font-size: 12px;
-      }
-      #error a {
-        color: blue;
-        text-decoration: underline;
-      }
-    </style>
+    </script>
   </head>
   <body>
     <div class="form-container">
@@ -67,37 +62,5 @@
         <p id="error"></p>
       </form>
     </div>
-
-    <script>
-      function login(event) {
-        event.preventDefault();
-        const username = document.getElementById("username").value;
-        const password = document.getElementById("password").value;
-        const errorElement = document.getElementById("error");
-
-        // Check if the username and password are for the admin
-        if (username === "Admin" && password === "adminguy123") {
-          localStorage.setItem("currentUser", username);
-          window.location.href = "admin.html"; // Redirect to admin page if Admin credentials
-        } else {
-          // Check if the account exists in localStorage
-          const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
-          const user = accounts.find(
-            (account) =>
-              account.username === username && account.password === password
-          );
-
-          if (user) {
-            // Redirect to storage page if account is found
-            localStorage.setItem("currentUser", username);
-            window.location.href = "storage.html";
-          } else {
-            // Show error if no account found
-            errorElement.innerHTML =
-              'Account not found. Click <a href="sign-up.html">here</a> to sign up.';
-          }
-        }
-      }
-    </script>
   </body>
 </html>
