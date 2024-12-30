@@ -3,123 +3,46 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="box.png" />
-    <title>Admin - Manage Accounts</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f8f9fa;
-      }
-      header {
-        background-color: #e08200;
-        color: white;
-        padding: 10px;
-        text-align: center;
-      }
-      .container {
-        padding: 20px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
-      table th,
-      table td {
-        border: 1px solid #ddd;
-        padding: 10px;
-        text-align: left;
-      }
-      table th {
-        background-color: #e08200;
-        color: white;
-      }
-      button {
-        background-color: red;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        cursor: pointer;
-        border-radius: 4px;
-      }
-      button:hover {
-        background-color: darkred;
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1>Admin - Manage Accounts</h1>
-    </header>
-    <div class="container">
-      <h2>Registered Accounts</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Password</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="accountList">
-          <!-- Accounts will be displayed here -->
-        </tbody>
-      </table>
-    </div>
+    <title>Admin - Box</title>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+      import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 
-    <script>
-      // Redirect to index.html if not Admin
-      function checkAdmin() {
-        const storedAdminCredentials = {
-          username: "Admin",
-          password: "adminguy123",
-        };
-        const username = prompt("Enter Username:");
-        const password = prompt("Enter Password:");
+      const firebaseConfig = {
+        apiKey: "AIzaSyD5bw3a-mbaoYOwOpCUcODwt77c-cJyWTw",
+        authDomain: "boxi-40e55.firebaseapp.com",
+        projectId: "boxi-40e55",
+        storageBucket: "boxi-40e55.firebasestorage.app",
+        messagingSenderId: "777028358786",
+        appId: "1:777028358786:web:961e22a3908b689a295a9b"
+      };
 
-        if (
-          username !== storedAdminCredentials.username ||
-          password !== storedAdminCredentials.password
-        ) {
-          window.location.href = "index.html"; // Redirect if credentials are incorrect
-        }
-      }
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
 
-      // Function to load accounts
-      function loadAccounts() {
-        const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
-        if (accounts.length === 0) {
-          alert("No accounts available.");
-        }
-        const accountList = document.getElementById("accountList");
-        accountList.innerHTML = "";
-
-        accounts.forEach((account, index) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${account.username}</td>
-            <td>${account.password}</td>
-            <td><button onclick="deleteAccount(${index})">Delete</button></td>
-          `;
-          accountList.appendChild(row);
+      function loadUsers() {
+        const usersRef = ref(db, 'users/');
+        get(usersRef).then((snapshot) => {
+          const userList = document.getElementById('user-list');
+          if (snapshot.exists()) {
+            const users = snapshot.val();
+            for (const userId in users) {
+              const user = users[userId];
+              const listItem = document.createElement('li');
+              listItem.innerHTML = `User: ${user.username}`;
+              userList.appendChild(listItem);
+            }
+          } else {
+            userList.innerHTML = "No users found.";
+          }
         });
       }
 
-      // Function to delete an account
-      function deleteAccount(index) {
-        const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
-        accounts.splice(index, 1);
-        localStorage.setItem("accounts", JSON.stringify(accounts));
-        loadAccounts();
-      }
-
-      // Run admin check
-      checkAdmin();
-
-      // Load accounts on page load
-      loadAccounts();
+      window.onload = loadUsers;
     </script>
+  </head>
+  <body>
+    <h1>Admin Dashboard</h1>
+    <ul id="user-list"></ul>
   </body>
 </html>
