@@ -4,10 +4,48 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Storage - Box</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4ede5;
+      }
+      h1 {
+        text-align: center;
+        color: #5a4630;
+      }
+      .file-upload-container {
+        text-align: center;
+        padding: 20px;
+      }
+      .file-list {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: #d2b48c;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+      }
+      .file-list ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      .file-list li {
+        margin: 5px 0;
+      }
+      button {
+        background-color: #8b5e3c;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #6e4830;
+      }
+    </style>
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-      import { getDatabase, ref, child, get } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
-      import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+      import { getDatabase, ref, set, child, get } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyD5bw3a-mbaoYOwOpCUcODwt77c-cJyWTw",
@@ -20,68 +58,40 @@
 
       const app = initializeApp(firebaseConfig);
       const db = getDatabase(app);
-      const storage = getStorage(app);
 
-      function loadUserFiles() {
-        const userId = localStorage.getItem("currentUser");
-        const filesRef = ref(db, 'users/' + userId + '/files');
-        
+      function loadFiles() {
+        const currentUserId = localStorage.getItem("currentUser");
+        const filesRef = ref(db, 'files/' + currentUserId);
+
         get(filesRef).then((snapshot) => {
-          const fileList = document.getElementById('file-list');
+          const fileList = document.getElementById("file-list");
+          fileList.innerHTML = '';  // Clear any previous files
           if (snapshot.exists()) {
             const files = snapshot.val();
             for (const fileId in files) {
               const file = files[fileId];
-              const listItem = document.createElement('li');
-              listItem.innerHTML = `File: <a href="${file.url}" target="_blank">${file.name}</a>`;
+              const listItem = document.createElement("li");
+              listItem.textContent = file.name;
               fileList.appendChild(listItem);
             }
           } else {
-            fileList.innerHTML = "No files uploaded.";
+            fileList.innerHTML = "No files found.";
           }
         });
       }
 
-      function uploadFile(event) {
-        event.preventDefault();
-        const userId = localStorage.getItem("currentUser");
-        const file = document.getElementById("file-input").files[0];
-        const fileRef = storageRef(storage, 'files/' + userId + '/' + file.name);
-
-        uploadBytes(fileRef, file).then(() => {
-          getDownloadURL(fileRef).then((url) => {
-            saveFileMetadata(userId, file.name, url);
-          });
-        }).catch((error) => {
-          console.error('Error uploading file:', error);
-        });
-      }
-
-      function saveFileMetadata(userId, fileName, fileURL) {
-        const filesRef = ref(db, 'users/' + userId + '/files');
-        const newFileRef = push(filesRef);
-        set(newFileRef, {
-          name: fileName,
-          url: fileURL,
-          uploadedAt: new Date().toISOString()
-        }).then(() => {
-          loadUserFiles();  // Reload the files list
-        }).catch((error) => {
-          console.error('Error saving file metadata:', error);
-        });
-      }
-
-      window.onload = loadUserFiles;
+      window.onload = loadFiles;
     </script>
   </head>
   <body>
-    <h1>Storage</h1>
-    <form onsubmit="uploadFile(event)">
-      <input type="file" id="file-input" required />
-      <button type="submit">Upload File</button>
-    </form>
-
-    <h2>Your Files:</h2>
-    <ul id="file-list"></ul>
+    <h1>Your Files</h1>
+    <div class="file-upload-container">
+      <input type="file" id="file-input" />
+      <button onclick="uploadFile()">Upload File</button>
+    </div>
+    <div class="file-list">
+      <h2>Your Files:</h2>
+      <ul id="file-list"></ul>
+    </div>
   </body>
 </html>
