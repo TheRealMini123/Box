@@ -4,6 +4,49 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign Up - Box</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f4ede5;
+      }
+      .form-container {
+        width: 300px;
+        padding: 20px;
+        background-color: #d2b48c;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        text-align: center;
+      }
+      .form-container h1 {
+        margin-bottom: 20px;
+        color: #5a4630;
+      }
+      .form-container input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #a0846c;
+        border-radius: 4px;
+        background-color: #f9f5f1;
+      }
+      .form-container button {
+        width: 100%;
+        padding: 10px;
+        background-color: #8b5e3c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .form-container button:hover {
+        background-color: #6e4830;
+      }
+    </style>
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
       import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
@@ -54,4 +97,3 @@
     </div>
   </body>
 </html>
-
