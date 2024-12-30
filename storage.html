@@ -3,216 +3,85 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="box.png" />
     <title>Storage - Box</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f4ede5;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        justify-content: center;
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+      import { getDatabase, ref, child, get } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+      import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyD5bw3a-mbaoYOwOpCUcODwt77c-cJyWTw",
+        authDomain: "boxi-40e55.firebaseapp.com",
+        projectId: "boxi-40e55",
+        storageBucket: "boxi-40e55.firebasestorage.app",
+        messagingSenderId: "777028358786",
+        appId: "1:777028358786:web:961e22a3908b689a295a9b"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+      const storage = getStorage(app);
+
+      function loadUserFiles() {
+        const userId = localStorage.getItem("currentUser");
+        const filesRef = ref(db, 'users/' + userId + '/files');
+        
+        get(filesRef).then((snapshot) => {
+          const fileList = document.getElementById('file-list');
+          if (snapshot.exists()) {
+            const files = snapshot.val();
+            for (const fileId in files) {
+              const file = files[fileId];
+              const listItem = document.createElement('li');
+              listItem.innerHTML = `File: <a href="${file.url}" target="_blank">${file.name}</a>`;
+              fileList.appendChild(listItem);
+            }
+          } else {
+            fileList.innerHTML = "No files uploaded.";
+          }
+        });
       }
-      .container {
-        width: 80%; /* Adjust width to your preference */
-        max-width: 800px; /* Limit maximum width */
-        padding: 20px;
+
+      function uploadFile(event) {
+        event.preventDefault();
+        const userId = localStorage.getItem("currentUser");
+        const file = document.getElementById("file-input").files[0];
+        const fileRef = storageRef(storage, 'files/' + userId + '/' + file.name);
+
+        uploadBytes(fileRef, file).then(() => {
+          getDownloadURL(fileRef).then((url) => {
+            saveFileMetadata(userId, file.name, url);
+          });
+        }).catch((error) => {
+          console.error('Error uploading file:', error);
+        });
       }
-      .header {
-        background-color: #8b5e3c;
-        color: white;
-        padding: 10px;
-        text-align: left;
+
+      function saveFileMetadata(userId, fileName, fileURL) {
+        const filesRef = ref(db, 'users/' + userId + '/files');
+        const newFileRef = push(filesRef);
+        set(newFileRef, {
+          name: fileName,
+          url: fileURL,
+          uploadedAt: new Date().toISOString()
+        }).then(() => {
+          loadUserFiles();  // Reload the files list
+        }).catch((error) => {
+          console.error('Error saving file metadata:', error);
+        });
       }
-      .content {
-        padding: 20px;
-        text-align: left;
-      }
-      .username {
-        font-size: 18px;
-        font-weight: bold;
-      }
-      .file-list {
-        margin-top: 20px;
-        list-style-type: none;
-        padding: 0;
-      }
-      .file-item {
-        margin-bottom: 10px;
-        padding: 10px;
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .file-item button {
-        margin-left: 10px;
-        padding: 5px 10px;
-        background-color: #8b5e3c;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      .file-item button:hover {
-        background-color: #6e4830;
-      }
-      .upload-container {
-        margin-top: 20px;
-      }
-      .upload-button {
-        background-color: #8b5e3c;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        cursor: pointer;
-        border-radius: 4px;
-      }
-      .upload-button:hover {
-        background-color: #6e4830;
-      }
-    </style>
+
+      window.onload = loadUserFiles;
+    </script>
   </head>
   <body>
-    <div class="container">
-      <div class="header">
-        <h1>Welcome to Storage</h1>
-      </div>
-      <div class="content">
-        <p id="greeting">Loading user...</p>
-        <div id="username" class="username"></div>
-        <h2>Your Files:</h2>
-        <ul id="file-list" class="file-list">
-          <!-- Files will be listed here -->
-        </ul>
+    <h1>Storage</h1>
+    <form onsubmit="uploadFile(event)">
+      <input type="file" id="file-input" required />
+      <button type="submit">Upload File</button>
+    </form>
 
-        <!-- Upload file section -->
-        <div class="upload-container">
-          <input type="file" id="file-upload" multiple />
-          <button class="upload-button" onclick="uploadFiles()">
-            Upload Files
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      // Retrieve current user from localStorage
-      const currentUser = localStorage.getItem("currentUser");
-
-      if (currentUser) {
-        // Display the current user's name
-        document.getElementById(
-          "greeting"
-        ).innerText = `Welcome back, ${currentUser}!`;
-        document.getElementById(
-          "username"
-        ).innerText = `Username: ${currentUser}`;
-
-        // Fetch files associated with the logged-in user from localStorage
-        const userFiles =
-          JSON.parse(localStorage.getItem(`${currentUser}_files`)) || [];
-
-        // Display the files
-        displayFiles(userFiles);
-      } else {
-        // If no current user is found, redirect to login page
-        window.location.href = "index.html";
-      }
-
-      // Function to upload files
-      function uploadFiles() {
-        const fileInput = document.getElementById("file-upload");
-        const files = fileInput.files;
-
-        if (files.length === 0) {
-          alert("Please select a file to upload.");
-          return;
-        }
-
-        // Fetch existing files or initialize an empty array
-        const userFiles =
-          JSON.parse(localStorage.getItem(`${currentUser}_files`)) || [];
-
-        // Add selected files to the list (store only file metadata)
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const fileMetadata = {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            data: file, // This is required to create a downloadable file
-          };
-          userFiles.push(fileMetadata);
-        }
-
-        // Save updated files back to localStorage
-        localStorage.setItem(`${currentUser}_files`, JSON.stringify(userFiles));
-
-        // Refresh the file list to display the newly uploaded files
-        displayFiles(userFiles);
-      }
-
-      // Function to display files
-      function displayFiles(files) {
-        const fileListElement = document.getElementById("file-list");
-        fileListElement.innerHTML = ""; // Clear current list
-
-        if (files.length > 0) {
-          files.forEach((file, index) => {
-            const fileItem = document.createElement("li");
-            fileItem.classList.add("file-item");
-
-            // File name
-            const fileName = document.createElement("span");
-            fileName.innerText = file.name;
-            fileItem.appendChild(fileName);
-
-            // Download button
-            const downloadButton = document.createElement("button");
-            downloadButton.innerText = "Download";
-            downloadButton.onclick = () => downloadFile(file);
-            fileItem.appendChild(downloadButton);
-
-            // Delete button
-            const deleteButton = document.createElement("button");
-            deleteButton.innerText = "Delete";
-            deleteButton.onclick = () => deleteFile(index);
-            fileItem.appendChild(deleteButton);
-
-            // Add the file item to the list
-            fileListElement.appendChild(fileItem);
-          });
-        } else {
-          fileListElement.innerHTML = "<li>No files found.</li>";
-        }
-      }
-
-      // Function to download a file
-      function downloadFile(file) {
-        const url = URL.createObjectURL(file.data);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.name;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-
-      // Function to delete a file
-      function deleteFile(index) {
-        const userFiles =
-          JSON.parse(localStorage.getItem(`${currentUser}_files`)) || [];
-        userFiles.splice(index, 1); // Remove file from array
-
-        // Save the updated file list to localStorage
-        localStorage.setItem(`${currentUser}_files`, JSON.stringify(userFiles));
-
-        // Refresh the file list to reflect changes
-        displayFiles(userFiles);
-      }
-    </script>
+    <h2>Your Files:</h2>
+    <ul id="file-list"></ul>
   </body>
 </html>
